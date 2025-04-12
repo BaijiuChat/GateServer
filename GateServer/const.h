@@ -19,6 +19,7 @@
 #include <boost/property_tree/ini_parser.hpp> // 解析ini配置文件
 // gRPC库  
 #include <grpcpp/grpcpp.h>	// gRPC的头文件  
+#include "message.grpc.pb.h" // message.proto编译生成的头文件
 
 namespace beast = boost::beast;         // from <boost/beast.hpp>  
 namespace http = beast::http;           // from <boost/beast/http.hpp>  

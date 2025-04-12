@@ -3,6 +3,8 @@
 int main()
 {
 	ConfigMgr g_config_mgr; // 创建ConfigMgr实例
+	std::string gate_port_str = g_config_mgr["GateServer"]["port"];
+	unsigned short gate_port = atoi(gate_port_str.c_str());
 	try {
 		unsigned short port = static_cast<unsigned short>(8080);
 		net::io_context ioc{ 1 };

@@ -17,12 +17,12 @@ ConfigMgr::ConfigMgr() {
 
 	// 控制台输出配置文件内容
 
-	/*for (const auto& [section_name, section_info] : _config_map) {
-		std::cout << "Section: " << section_name << std::endl;
-		for (const auto& [key, value] : section_info._section_datas) {
-			std::cout << "  " << key << ": " << value << std::endl;
-		}
-	}*/
+	//for (const auto& [section_name, section_info] : _config_map) {
+	//	std::cout << "Section: " << section_name << std::endl;
+	//	for (const auto& [key, value] : section_info._section_datas) {
+	//		std::cout << "  " << key << ": " << value << std::endl;
+	//	}
+	//}
 }
 
 /////////////// 旧版代码 ///////////////

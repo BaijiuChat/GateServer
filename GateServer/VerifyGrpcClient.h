@@ -1,8 +1,5 @@
 #pragma once
 #include "const.h"
-#include <grpcpp/grpcpp.h>
-#include "message.grpc.pb.h"
-#include "Singleton.h"
 
 using grpc::Channel; // 客户端与服务端之间的通信通道。
 using grpc::ClientContext; // 用于配置和管理单个 RPC 调用的上下文。
