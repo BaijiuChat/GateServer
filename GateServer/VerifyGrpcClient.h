@@ -34,6 +34,11 @@ public:
 		}
 	}
 private:
+	VerifyGrpcClient() {
+		std::shared_ptr<Channel> channel = grpc::CreateChannel(
+			"localhost:50051", grpc::InsecureChannelCredentials());
+		stub_ = VerifyService::NewStub(channel); // 创建一个新的存根对象（信使）
+	}
 	std::unique_ptr <VerifyService::Stub> stub_;
 };
 
