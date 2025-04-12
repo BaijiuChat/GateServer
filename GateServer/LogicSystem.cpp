@@ -1,5 +1,6 @@
 #include "LogicSystem.h"
 #include "HttpConnection.h"
+#include "VerifyGrpcClient.h" // 联动post和grpc
 
 void LogicSystem::RegGet(std::string url, HttpHandler handler)
 {
@@ -42,8 +43,9 @@ LogicSystem::LogicSystem()
 			return true;
 		}
 		auto email = src_root["email"].asString();
+		GetVerifyRsp rsp = VerifyGrpcClient::GetInstance()->GetVerifyCode(email);
 		std::cout << "\nemail is " << email << "\n\n";
-		root["error"] = ErrorCodes::SUCCESS;
+		root["error"] = rsp.error();
 		root["email"] = src_root["email"];
 		std::string jsonstr = root.toStyledString(); // TCP是面向字节流的，需要转成字符串
 		beast::ostream(connection->_response.body()) << jsonstr;
