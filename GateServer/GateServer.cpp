@@ -1,7 +1,8 @@
 ﻿#include "CServer.h"
-
+#include "ConfigMgr.h"
 int main()
 {
+	ConfigMgr g_config_mgr; // 创建ConfigMgr实例
 	try {
 		unsigned short port = static_cast<unsigned short>(8080);
 		net::io_context ioc{ 1 };

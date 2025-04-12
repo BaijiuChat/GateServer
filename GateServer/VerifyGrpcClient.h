@@ -39,6 +39,6 @@ private:
 			"localhost:50051", grpc::InsecureChannelCredentials());
 		stub_ = VerifyService::NewStub(channel); // 创建一个新的存根对象（信使）
 	}
-	std::unique_ptr <VerifyService::Stub> stub_;
+	std::unique_ptr <VerifyService::Stub> stub_; // 存根对象，用于与服务端进行通信
 };
 
