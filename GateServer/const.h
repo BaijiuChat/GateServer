@@ -1,6 +1,7 @@
 #pragma once  
 // C++标准库  
 #include <iostream>  
+#include <string>  // 测试
 #include "Singleton.h"  
 #include <functional> // 实现std::function  
 #include <map>  
