@@ -1,5 +1,8 @@
 #include "HttpConnection.h"
 #include "LogicSystem.h"
+#include <iostream>
+#include <cassert>
+#include <boost/beast/core/ostream.hpp>
 
 // 记住socket只能移动构造，不能拷贝构造
 HttpConnection::HttpConnection(tcp::socket socket)

@@ -4,22 +4,22 @@ const const_module = require('./const')
 const { v4:uuidv4 } = require('uuid')
 const emailModule = require ('./email')
 
-function generateSixDigitCode() {
-    const randomNum = Math.floor(Math.random() * 1000000); // 0~999999
-    return randomNum.toString().padStart(6, '0'); // 不足6位补零
-}
-
 // call是请求，callback是回调函数，注意async
 async function GetVerifyCode(call, callback) {
     console.log("email is ", call.request.email)
     console.log("GetVerifyCode is called")
 
+    function generateSixDigitCode() {
+        const randomNum = Math.floor(Math.random() * 1000000); // 0~999999
+        return randomNum.toString().padStart(6, '0'); // 不足6位补零
+    }
+
     //生成验证码
     let uniqueId = null;
     try{
         uniqueId = generateSixDigitCode();
-        console.log("uniqueId is ", uniqueId)
-        let text_str = `您的验证码如下:\n\n<b><font size="8">${uniqueId}</font></b>\n\n使用该验证码验证您的邮箱并完成你的注册。\n\n如果您并没有请求验证码，请无视该邮件。\n\n白久无瑕团队敬上`;
+        console.log(" 验证码是 ", uniqueId)
+        let text_str = `您的验证码如下:\n\n<b><font size="6">${uniqueId}</font></b>\n\n使用该验证码验证您的邮箱并完成你的注册。\n\n如果您并没有请求验证码，请无视该邮件。\n\n白久无瑕团队敬上`;
         //发送邮件
         let mailOptions = {
             from: 'baijiuwuhu@163.com',

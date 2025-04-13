@@ -1,6 +1,16 @@
 ﻿#pragma once
+#include <memory>
+#include <string>
+#include <unordered_map>
+#include <chrono>
+#include <boost/beast/core.hpp>
+#include <boost/beast/http.hpp>
+#include <boost/asio.hpp>
 
-#include "const.h"
+namespace beast = boost::beast;
+namespace http = beast::http;
+namespace net = boost::asio;
+using tcp = boost::asio::ip::tcp;
 
 class LogicSystem; //前置声明LogicSystem，避免头文件的循环引用，一定不要在头文件include LogicSystem
 class HttpConnection:public std::enable_shared_from_this<HttpConnection>

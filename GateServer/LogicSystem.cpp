@@ -1,6 +1,10 @@
 #include "LogicSystem.h"
 #include "HttpConnection.h"
-#include "VerifyGrpcClient.h" // Áª¶¯postºÍgrpc
+#include "VerifyGrpcClient.h"
+#include <iostream>
+#include <boost/beast/core/ostream.hpp>
+#include <json/json.h>
+#include <json/reader.h>
 
 void LogicSystem::RegGet(std::string url, HttpHandler handler)
 {

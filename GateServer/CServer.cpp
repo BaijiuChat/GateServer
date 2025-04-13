@@ -1,5 +1,9 @@
 #include "CServer.h"
 #include "HttpConnection.h"
+#include <iostream>
+#include <boost/beast.hpp>
+
+namespace beast = boost::beast;
 
 // _ioc、_acceptor和_socket都是私有变量，而构造函数中没有提供，所以程序会调用默认构造
 // 为了让其正常构造，需要使用拷贝构造，也就是 冒号 后面的三个东西

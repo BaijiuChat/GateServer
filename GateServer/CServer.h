@@ -1,6 +1,9 @@
 #pragma once
+#include <memory>        // ÓÃÓÚ enable_shared_from_this
+#include <boost/asio.hpp>
 
-#include "const.h"
+namespace net = boost::asio;
+using tcp = boost::asio::ip::tcp;
 
 class CServer:public std::enable_shared_from_this<CServer>
 {

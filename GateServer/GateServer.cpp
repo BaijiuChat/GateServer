@@ -1,5 +1,9 @@
 ﻿#include "CServer.h"
 #include "ConfigMgr.h"
+#include <iostream>
+#include <cstdlib>      // 用于 EXIT_FAILURE
+#include <boost/asio/signal_set.hpp>
+
 int main()
 {
 	ConfigMgr g_config_mgr; // 创建ConfigMgr实例

@@ -1,5 +1,11 @@
 #pragma once
-#include "const.h"
+#include <iostream>
+#include <memory>
+#include <string>
+#include <grpcpp/grpcpp.h>
+#include "message.grpc.pb.h"
+#include "Singleton.h"
+#include "const.h"  // 仅用于 ErrorCodes 枚举，可以考虑单独提取
 
 using grpc::Channel; // 客户端与服务端之间的通信通道。
 using grpc::ClientContext; // 用于配置和管理单个 RPC 调用的上下文。

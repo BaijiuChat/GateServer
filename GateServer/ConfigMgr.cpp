@@ -1,4 +1,9 @@
 #include "ConfigMgr.h"
+#include <iostream>
+#include <boost/filesystem.hpp>
+#include <boost/property_tree/ptree.hpp>
+#include <boost/property_tree/ini_parser.hpp>
+
 ConfigMgr::ConfigMgr() {
 	boost::filesystem::path config_path = boost::filesystem::current_path() / "config.ini";
 	std::cout << "config_path is " << config_path.string() << std::endl;

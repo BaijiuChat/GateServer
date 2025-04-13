@@ -1,5 +1,6 @@
 #pragma once
-#include "const.h"
+#include <map>
+#include <string>
 
 struct SectionInfo {
 	SectionInfo() {};
