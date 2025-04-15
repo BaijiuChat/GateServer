@@ -2,20 +2,48 @@
 #include <iostream>
 #include <memory>
 #include <string>
+#include <atomic>
+#include <queue>
+#include <mutex>
+#include <condition_variable>
 #include <grpcpp/grpcpp.h>
 #include "message.grpc.pb.h"
 #include "Singleton.h"
-#include "const.h"  // ½öÓÃÓÚ ErrorCodes Ã¶¾Ù£¬¿ÉÒÔ¿¼ÂÇµ¥¶ÀÌáÈ¡
+#include "const.h"  // ä»…ç”¨äº ErrorCodes æšä¸¾ï¼Œå¯ä»¥è€ƒè™‘å•ç‹¬æå–
 
-using grpc::Channel; // ¿Í»§¶ËÓë·şÎñ¶ËÖ®¼äµÄÍ¨ĞÅÍ¨µÀ¡£
-using grpc::ClientContext; // ÓÃÓÚÅäÖÃºÍ¹ÜÀíµ¥¸ö RPC µ÷ÓÃµÄÉÏÏÂÎÄ¡£
-using grpc::Status; //  RPC µ÷ÓÃµÄ½á¹û×´Ì¬¡£
+using grpc::Channel; // å®¢æˆ·ç«¯ä¸æœåŠ¡ç«¯ä¹‹é—´çš„é€šä¿¡é€šé“ã€‚
+using grpc::ClientContext; // ç”¨äºé…ç½®å’Œç®¡ç†å•ä¸ª RPC è°ƒç”¨çš„ä¸Šä¸‹æ–‡ã€‚
+using grpc::Status; //  RPC è°ƒç”¨çš„ç»“æœçŠ¶æ€ã€‚
 
 using message::GetVerifyReq;
 using message::GetVerifyRsp;
 using message::VerifyService;
 
-// ÕâÀïÊÇÒ»¸öµ¥ÀıÄ£Ê½µÄÊµÏÖ£¬È·±£ÔÚÕû¸ö³ÌĞòÖĞÖ»ÓĞÒ»¸ö VerifyGrpcClient ÊµÀı¡£
+class RPConPool {
+public:
+	RPConPool(size_t poolsize, std::string host, std::string port) :
+		poolSize(poolsize), host_(host), port_(port), b_stop(false)
+	{
+		for (size_t i = 0; i < poolSize; ++i) {
+			auto channel = grpc::CreateChannel(host_ + ":" + port_, grpc::InsecureChannelCredentials());
+			connections_.push(std::move(VerifyService::NewStub(channel)));
+		}
+	}
+
+	~RPConPool(){
+
+	}
+private:
+	std::atomic<bool> b_stop;
+	size_t poolSize;
+	std::string host_;
+	std::string port_;
+	std::queue<std::unique_ptr<VerifyService::Stub>> connections_;
+	std::condition_variable cond_;
+	std::mutex mutex_;
+};
+
+// è¿™é‡Œæ˜¯ä¸€ä¸ªå•ä¾‹æ¨¡å¼çš„å®ç°ï¼Œç¡®ä¿åœ¨æ•´ä¸ªç¨‹åºä¸­åªæœ‰ä¸€ä¸ª VerifyGrpcClient å®ä¾‹ã€‚
 class VerifyGrpcClient : public Singleton<VerifyGrpcClient>
 {
 	friend class Singleton<VerifyGrpcClient>;
@@ -38,10 +66,7 @@ public:
 	}
 private:
 	VerifyGrpcClient() {
-		std::shared_ptr<Channel> channel = grpc::CreateChannel(
-			"localhost:50051", grpc::InsecureChannelCredentials());
-		stub_ = VerifyService::NewStub(channel); // ´´½¨Ò»¸öĞÂµÄ´æ¸ù¶ÔÏó£¨ĞÅÊ¹£©
+
 	}
-	std::unique_ptr <VerifyService::Stub> stub_; // ´æ¸ù¶ÔÏó£¬ÓÃÓÚÓë·şÎñ¶Ë½øĞĞÍ¨ĞÅ
 };
 

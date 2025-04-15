@@ -1,15 +1,15 @@
 #pragma once
 #include <map>
-#include <memory>      // 用于 std::shared_ptr
-#include <functional>  // 用于 std::function
+#include <memory>      // 鐢ㄤ簬 std::shared_ptr
+#include <functional>  // 鐢ㄤ簬 std::function
 #include "Singleton.h"
 
-class HttpConnection; //前置声明HttpConnection，避免头文件的循环引用，一定不要在头文件include HttpConnection
-typedef std::function<void(std::shared_ptr<HttpConnection>)>HttpHandler; // 声明HttpHandler函数
+class HttpConnection; //鍓嶇疆澹版槑HttpConnection锛岄伩鍏嶅ご鏂囦欢鐨勫惊鐜紩鐢紝涓�瀹氫笉瑕佸湪澶存枃浠秈nclude HttpConnection
+typedef std::function<void(std::shared_ptr<HttpConnection>)>HttpHandler; // 澹版槑HttpHandler鍑芥暟
 class LogicSystem : public Singleton<LogicSystem> {
 	friend class Singleton<LogicSystem>;
 public:
-	// ~LogicSystem(){};  析构没啥用，不管
+	// ~LogicSystem(){};  鏋愭瀯娌″暐鐢紝涓嶇
 	bool HandleGet(std::string, std::shared_ptr<HttpConnection>);
 	void RegGet(std::string, HttpHandler);
 	void RegPost(std::string, HttpHandler);

@@ -1,17 +1,18 @@
 #pragma once
 #include <map>
 #include <string>
+#include "Singleton.h"
 
 struct SectionInfo {
 	SectionInfo() {};
 	~SectionInfo(){ _section_datas.clear(); }
 
-	// ¸´ÖÆ¹¹Ôìº¯Êı£¬±ÜÃâÊ¹ÓÃÄ¬ÈÏµÄ¿½±´¹¹Ôìº¯Êı
+	// å¤åˆ¶æ„é€ å‡½æ•°ï¼Œé¿å…ä½¿ç”¨é»˜è®¤çš„æ‹·è´æ„é€ å‡½æ•°
 	SectionInfo(const SectionInfo& other) {
 		_section_datas = other._section_datas;
 	}
 
-	// ÖØÔØ=ÔËËã·û£¬±ÜÃâÊ¹ÓÃÄ¬ÈÏµÄ¸³ÖµÔËËã·û£¬½ûÖ¹×Ô¼º¿½±´×Ô¼º
+	// é‡è½½=è¿ç®—ç¬¦ï¼Œé¿å…ä½¿ç”¨é»˜è®¤çš„èµ‹å€¼è¿ç®—ç¬¦ï¼Œç¦æ­¢è‡ªå·±æ‹·è´è‡ªå·±
 	SectionInfo& operator=(const SectionInfo& other) {
 		if (this != &other) {
 			_section_datas = other._section_datas;
@@ -19,8 +20,8 @@ struct SectionInfo {
 		return *this;
 	}
 
-	std::map<std::string, std::string> _section_datas; // keyºÍvalueµÄmap
-	// ÖØÔØ[]ÔËËã·û£¬·½±ãÊ¹ÓÃ£¬±ÜÃâÊ¹ÓÃfind¶øµ¼ÖÂµÄÂé·³£¬±ÈÈç²åÈë¿ÕÖµµÈ
+	std::map<std::string, std::string> _section_datas; // keyå’Œvalueçš„map
+	// é‡è½½[]è¿ç®—ç¬¦ï¼Œæ–¹ä¾¿ä½¿ç”¨ï¼Œé¿å…ä½¿ç”¨findè€Œå¯¼è‡´çš„éº»çƒ¦ï¼Œæ¯”å¦‚æ’å…¥ç©ºå€¼ç­‰
 	std::string operator[](const std::string& key) const {
 		auto it = _section_datas.find(key);
 		if (it != _section_datas.end()) {
@@ -29,10 +30,11 @@ struct SectionInfo {
 		return "";
 	}
 };;
-class ConfigMgr
+
+class ConfigMgr : public Singleton<ConfigMgr>
 {
+	friend class Singleton<ConfigMgr>;
 public:
-	ConfigMgr();
 	~ConfigMgr()
 	{
 		_config_map.clear();
@@ -45,11 +47,17 @@ public:
 		return _config_map[section];
 	}
 
-	// ¿½±´¹¹Ôìº¯Êı
+	// 
+	static ConfigMgr& Inst() {
+		static ConfigMgr cfg_mgr; // é¦–æ¬¡è°ƒç”¨Instæ—¶åˆ›å»ºcfg_mgrï¼Œå¹¶ä¸”å› ä¸ºC++ç‰¹æ€§ï¼Œå±€éƒ¨å˜é‡æ˜¯çº¿ç¨‹å®‰å…¨çš„
+		return cfg_mgr; // åç»­è°ƒç”¨ç›´æ¥è¿”å›cfg_mgr
+	}
+
+	// æ‹·è´æ„é€ å‡½æ•°
 	ConfigMgr(const ConfigMgr& other) {
 		_config_map = other._config_map;
 	}
-	// ¿½±´¸³Öµº¯Êı£¬ÖØÔØ=ÔËËã·û
+	// æ‹·è´èµ‹å€¼å‡½æ•°ï¼Œé‡è½½=è¿ç®—ç¬¦
 	ConfigMgr& operator=(const ConfigMgr& other) {
 		if (this != &other) {
 			_config_map = other._config_map;
@@ -58,6 +66,7 @@ public:
 	}
 	
 private:
-	std::map<std::string, SectionInfo> _config_map; // sectionºÍmapµÄmap
+	ConfigMgr();
+	std::map<std::string, SectionInfo> _config_map; // sectionå’Œmapçš„map
 };
 

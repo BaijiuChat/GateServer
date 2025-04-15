@@ -1,29 +1,29 @@
 #pragma once  
-// C++±ê×¼¿â  
+// C++æ ‡å‡†åº“  
 //#include <iostream>  
 //#include <vector>
 //#include <map>  
 //#include <unordered_map>  
-//#include <memory>  //ÊµÏÖCRTPÆæÒìµİ¹é  
-//#include <functional> // ÊµÏÖstd::function  
+//#include <memory>  //å®ç°CRTPå¥‡å¼‚é€’å½’  
+//#include <functional> // å®ç°std::function  
 //#include "Singleton.h"  
 
-// JSON¿â  
-//#include <json/json.h>  // »ù´¡¹¦ÄÜ  
-//#include <json/value.h>  // ½Úµã½á¹¹  
-//#include <json/reader.h>  // ½âÎöjson  
+// JSONåº“  
+//#include <json/json.h>  // åŸºç¡€åŠŸèƒ½  
+//#include <json/value.h>  // èŠ‚ç‚¹ç»“æ„  
+//#include <json/reader.h>  // è§£æjson  
 
-// Boost¿â  
+// Booståº“  
 //#include <boost/beast/http.hpp> // http  
-//#include <boost/beast.hpp> // httpºÍwebsocket  
-//#include <boost/asio.hpp> // Òì²½IO  
-//#include <boost/filesystem.hpp> // ÎÄ¼şÏµÍ³  
-//#include <boost/property_tree/ptree.hpp> // ÅäÖÃÎÄ¼ş
-//#include <boost/property_tree/ini_parser.hpp> // ½âÎöiniÅäÖÃÎÄ¼ş
+//#include <boost/beast.hpp> // httpå’Œwebsocket  
+//#include <boost/asio.hpp> // å¼‚æ­¥IO  
+//#include <boost/filesystem.hpp> // æ–‡ä»¶ç³»ç»Ÿ  
+//#include <boost/property_tree/ptree.hpp> // é…ç½®æ–‡ä»¶
+//#include <boost/property_tree/ini_parser.hpp> // è§£æinié…ç½®æ–‡ä»¶
 
-// gRPC¿â  
-//#include <grpcpp/grpcpp.h>	// gRPCµÄÍ·ÎÄ¼ş  
-//#include "message.grpc.pb.h" // message.proto±àÒëÉú³ÉµÄÍ·ÎÄ¼ş
+// gRPCåº“  
+//#include <grpcpp/grpcpp.h>	// gRPCçš„å¤´æ–‡ä»¶  
+//#include "message.grpc.pb.h" // message.protoç¼–è¯‘ç”Ÿæˆçš„å¤´æ–‡ä»¶
 
 //namespace beast = boost::beast;         // from <boost/beast.hpp>  
 //namespace http = beast::http;           // from <boost/beast/http.hpp>  
@@ -35,6 +35,3 @@ SUCCESS = 0,
 Error_Json = 1001,  
 RPCFailed = 1002,  
 };
-
-class ConfigMgr;
-extern ConfigMgr g_config_mgr; // ÉùÃ÷È«¾Ö±äÁ¿ConfigMgrÊµÀı

@@ -1,5 +1,5 @@
 #pragma once
-#include <memory>        // 用于 enable_shared_from_this
+#include <memory>        // 鐢ㄤ簬 enable_shared_from_this
 #include <boost/asio.hpp>
 
 namespace net = boost::asio;
@@ -8,11 +8,10 @@ using tcp = boost::asio::ip::tcp;
 class CServer:public std::enable_shared_from_this<CServer>
 {
 public:
-	CServer(boost::asio::io_context& ioc, unsigned short& port);  // 上面的namespace
+	CServer(boost::asio::io_context& ioc, unsigned short& port);  // 涓婇潰鐨刵amespace
 	void Start();
 private:
 	net::io_context& _ioc;
 	tcp::acceptor _acceptor;
-	tcp::socket _socket;
 };
 
