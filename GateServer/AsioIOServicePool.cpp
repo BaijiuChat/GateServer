@@ -17,9 +17,17 @@ AsioIOServicePool::AsioIOServicePool(std::size_t size) :
     }
     // 窗口的“营业中”牌子（只要挂着，窗口就保持工作状态，即使暂时没顾客）。
     // 遍历多个ioservice，创建多个线程，每个线程内部启动ioservice
+    // 在AsioIOServicePool.cpp中添加状态监控
     for (std::size_t i = 0; i < _ioServices.size(); ++i) {
         _threads.emplace_back([this, i]() {
-            _ioServices[i].run();
+            std::cout << "IO Service 第 " << i << " 线程启动" << std::endl;
+            try {
+                _ioServices[i].run();
+                std::cout << "IO Service 第" << i << " 正常结束" << std::endl;
+            }
+            catch (std::exception& e) {
+                std::cerr << "IO Service 第" << i << " 线程错误： " << e.what() << std::endl;
+            }
             });
     }
 }

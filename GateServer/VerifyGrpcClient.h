@@ -24,10 +24,18 @@ public:
 	RPConPool(size_t poolsize, std::string host, std::string port) :
 		poolSize(poolsize), host_(host), port_(port), b_stop(false)
 	{
+		// 创建并配置ChannelArguments
+		grpc::ChannelArguments args;
+		args.SetInt(GRPC_ARG_KEEPALIVE_TIME_MS, 10000);       // 设置保持连接的时间
+		args.SetInt(GRPC_ARG_KEEPALIVE_TIMEOUT_MS, 5000);     // 设置超时
+		args.SetInt(GRPC_ARG_KEEPALIVE_PERMIT_WITHOUT_CALLS, 1); // 允许在没有RPC调用的情况下发送保活包
+
 		for (size_t i = 0; i < poolSize; ++i) {
-			auto channel = grpc::CreateChannel(host_ + ":" + port_, grpc::InsecureChannelCredentials());
+            auto channel = grpc::CreateCustomChannel(host_ + ":" + port_, grpc::InsecureChannelCredentials(), args);
+			std::cout << "创建链接 " << i + 1 << " 至 " << host_ << ":" << port_ << std::endl;
 			connections_.push(std::move(VerifyService::NewStub(channel)));
 		}
+		std::cout << "连接池初始化成功，有 " << poolSize << " 个连接" << std::endl;
 	}
 
 	~RPConPool(){
@@ -90,7 +98,7 @@ public:
 		else {
 			pool_->ReturnConnection(std::move(stub));
 			reply.set_error(ErrorCodes::RPCFailed);
-			std::cout << "RPC failed" << std::endl;
+			std::cout << "RPC failed: " << status.error_code() << ": " << status.error_message() << std::endl;
 			return reply;
 		}
 	}
