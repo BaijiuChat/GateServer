@@ -32,6 +32,7 @@ public:
 
 	~RPConPool(){
 		std::lock_guard<std::mutex> lock(mutex_);
+		Close();
 		while (!connections_.empty()) {
 			connections_.pop();
 		}
@@ -39,10 +40,26 @@ public:
 
 	void Close(){
 		std::lock_guard<std::mutex> lock(mutex_);
-		b_stop = true;
+		b_stop = true; // 设置停止标志
 		cond_.notify_all(); // 通知所有等待的线程
 	}
 	
+	std::unique_ptr<VerifyService::Stub> GetConnection(){
+		std::unique_lock<std::mutex> lock(mutex_);
+		cond_.wait(lock, [this](){
+			if(b_stop) return true;
+			return !connections_.empty();
+			});
+		if(b_stop) return nullptr;
+		auto context = std::move(connections_.front());
+		connections_.pop();
+		return context;
+	}
+
+	void ReturnConnection(std::unique_ptr<VerifyService::Stub> context){
+		std::lock_guard<std::mutex> lock(mutex_);
+		if(!b_stop) connections_.push(std::move(context));
+	}
 	
 private:
 	std::atomic<bool> b_stop;
@@ -63,13 +80,15 @@ public:
 		GetVerifyReq request;
 		GetVerifyRsp reply;
 		ClientContext context;;
-
+		auto stub = pool_->GetConnection();
 		request.set_email(email);
-		Status status = stub_->GetVerifyCode(&context, request, &reply);
+		Status status = stub->GetVerifyCode(&context, request, &reply);
 		if (status.ok()) {
+			pool_->ReturnConnection(std::move(stub));
 			return reply;
 		}
 		else {
+			pool_->ReturnConnection(std::move(stub));
 			reply.set_error(ErrorCodes::RPCFailed);
 			std::cout << "RPC failed" << std::endl;
 			return reply;
@@ -79,5 +98,7 @@ private:
 	VerifyGrpcClient() {
 
 	}
+
+	std::unique_ptr<RPConPool> pool_;
 };
 
