@@ -9,8 +9,11 @@ AsioIOServicePool::AsioIOServicePool(std::size_t size) :
     // io_context池，多个银行窗口（比如2个窗口），每个窗口独立处理业务，避免顾客挤在一个窗口排队。
     for (std::size_t i = 0; i < size; ++i) {
         // 使用emplace创建Work对象，而不是错误的赋值方式
-        _works[i] = std::make_unique<boost::asio::executor_work_guard<boost::asio::io_context::executor_type>>(
-            _ioServices[i].get_executor());
+		_works[i] = std::make_unique<Work>(_ioServices[i].get_executor());
+		// 让每个窗口都处于“营业中”状态
+		// 这样可以避免io_context在没有工作时自动退出
+		// 也可以使用boost::asio::executor_work_guard来实现
+		// _works[i] = std::make_unique<Work>(_ioServices[i]);
     }
     // 窗口的“营业中”牌子（只要挂着，窗口就保持工作状态，即使暂时没顾客）。
     // 遍历多个ioservice，创建多个线程，每个线程内部启动ioservice

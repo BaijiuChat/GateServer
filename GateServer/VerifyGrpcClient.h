@@ -95,9 +95,7 @@ public:
 		}
 	}
 private:
-	VerifyGrpcClient() {
-
-	}
+	VerifyGrpcClient();
 
 	std::unique_ptr<RPConPool> pool_;
 };

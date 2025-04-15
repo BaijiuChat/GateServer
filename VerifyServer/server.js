@@ -51,7 +51,7 @@ async function GetVerifyCode(call, callback) {
 function main() {
     var server = new grpc.Server()
     server.addService(message_proto.VerifyService.service, { GetVerifyCode: GetVerifyCode })
-    server.bindAsync('0.0.0.0:50051', grpc.ServerCredentials.createInsecure(), () => {
+    server.bindAsync('127.0.0.1:50051', grpc.ServerCredentials.createInsecure(), () => {
         // server.start() 已经不需要，bindAsync会自动调用bindAsync
         console.log('gRPC 服务已启动，监听端口 50051')        
     })
