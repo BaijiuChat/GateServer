@@ -12,15 +12,15 @@ ConfigMgr::ConfigMgr() {
 	boost::property_tree::read_ini(config_path.string(), pt);
 
 	for (const auto& [section_name, section_tree] : pt) {
-		// Ö±½ÓÔÚ map ÖĞ¹¹Ôì SectionInfo
+		// ç›´æ¥åœ¨ map ä¸­æ„é€  SectionInfo
 		auto& section_info = _config_map[section_name];
-		// Ö±½Ó±éÀú²¢Ìî³ä section_datas
+		// ç›´æ¥éå†å¹¶å¡«å…… section_datas
 		for (const auto& [key, value_node] : section_tree) {
 			section_info._section_datas.emplace(key, value_node.data());
 		}
 	}
 
-	// ¿ØÖÆÌ¨Êä³öÅäÖÃÎÄ¼şÄÚÈİ
+	// æ§åˆ¶å°è¾“å‡ºé…ç½®æ–‡ä»¶å†…å®¹
 	for (const auto& [section_name, section_info] : _config_map) {
 		std::cout << "Section: " << section_name << std::endl;
 		for (const auto& [key, value] : section_info._section_datas) {
@@ -29,23 +29,23 @@ ConfigMgr::ConfigMgr() {
 	}
 }
 
-/////////////// ¾É°æ´úÂë ///////////////
-//boost::property_tree::ptree pt; // ´´½¨Ò»¸öptree¶ÔÏó
-//boost::property_tree::read_ini(config_path.string(), pt); // ¶ÁÈ¡ÅäÖÃÎÄ¼ş
+/////////////// æ—§ç‰ˆä»£ç  ///////////////
+//boost::property_tree::ptree pt; // åˆ›å»ºä¸€ä¸ªptreeå¯¹è±¡
+//boost::property_tree::read_ini(config_path.string(), pt); // è¯»å–é…ç½®æ–‡ä»¶
 //
 //for (const auto& section_pair : pt) {
-//	const std::string& section_name = section_pair.first; // »ñÈ¡sectionµÄÃû³Æ
+//	const std::string& section_name = section_pair.first; // è·å–sectionçš„åç§°
 //
-//	const boost::property_tree::ptree& section_tree = section_pair.second; // »ñÈ¡sectionµÄÄÚÈİ
-//	std::map<std::string, std::string> section_config; // ´´½¨Ò»¸ömapÀ´´æ´¢ÄÚ²¿sectionµÄÊı¾İ
+//	const boost::property_tree::ptree& section_tree = section_pair.second; // è·å–sectionçš„å†…å®¹
+//	std::map<std::string, std::string> section_config; // åˆ›å»ºä¸€ä¸ªmapæ¥å­˜å‚¨å†…éƒ¨sectionçš„æ•°æ®
 //	for (const auto& item : section_tree) {
-//		const std::string& key = item.first; // »ñÈ¡key
-//		const std::string& value = item.second.data(); // »ñÈ¡value
-//		section_config[key] = value; // ½«keyºÍvalue´æÈëmapÖĞ
+//		const std::string& key = item.first; // è·å–key
+//		const std::string& value = item.second.data(); // è·å–value
+//		section_config[key] = value; // å°†keyå’Œvalueå­˜å…¥mapä¸­
 //	}
-//	SectionInfo section_info; // ´´½¨Ò»¸öSectionInfo¶ÔÏó
-//	section_info._section_datas = section_config; // ½«map¸³Öµ¸øSectionInfo¶ÔÏó
+//	SectionInfo section_info; // åˆ›å»ºä¸€ä¸ªSectionInfoå¯¹è±¡
+//	section_info._section_datas = section_config; // å°†mapèµ‹å€¼ç»™SectionInfoå¯¹è±¡
 //
-//	_config_map[section_name] = section_info; // ½«SectionInfo¶ÔÏó´æÈë_config_mapÖĞ
+//	_config_map[section_name] = section_info; // å°†SectionInfoå¯¹è±¡å­˜å…¥_config_mapä¸­
 //}
-/////////////// ¾É°æ´úÂë ///////////////
+/////////////// æ—§ç‰ˆä»£ç  ///////////////

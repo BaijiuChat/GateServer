@@ -1,4 +1,4 @@
-﻿#include "CServer.h"
+#include "CServer.h"
 #include "ConfigMgr.h"
 #include <iostream>
 #include <cstdlib>      // 用于 EXIT_FAILURE
@@ -6,7 +6,7 @@
 
 int main()
 {
-	ConfigMgr g_config_mgr; // 创建ConfigMgr实例
+	auto& g_config_mgr = ConfigMgr::Inst(); // 创建ConfigMgr实例
 	std::string gate_port_str = g_config_mgr["GateServer"]["port"];
 	unsigned short gate_port = atoi(gate_port_str.c_str());
 	try {

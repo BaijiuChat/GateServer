@@ -1,4 +1,4 @@
-﻿#pragma once
+#pragma once
 #include <memory>
 #include <string>
 #include <unordered_map>
@@ -17,8 +17,9 @@ class HttpConnection:public std::enable_shared_from_this<HttpConnection>
 {
 public:
 	friend class LogicSystem; // 因为它是单例
-	HttpConnection(tcp::socket socket);
+	HttpConnection(net::io_context& ioc);
 	void Start();
+	tcp::socket& GetSocket() { return _socket; }
 private:
 	void CheckDeadline();
 	void PreParseGetParam();

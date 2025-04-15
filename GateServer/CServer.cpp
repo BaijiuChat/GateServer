@@ -1,42 +1,44 @@
 #include "CServer.h"
 #include "HttpConnection.h"
+#include "AsioIOServicePool.h"
 #include <iostream>
 #include <boost/beast.hpp>
 
 namespace beast = boost::beast;
 
-// _ioc¡¢_acceptorºÍ_socket¶¼ÊÇË½ÓĞ±äÁ¿£¬¶ø¹¹Ôìº¯ÊıÖĞÃ»ÓĞÌá¹©£¬ËùÒÔ³ÌĞò»áµ÷ÓÃÄ¬ÈÏ¹¹Ôì
-// ÎªÁËÈÃÆäÕı³£¹¹Ôì£¬ĞèÒªÊ¹ÓÃ¿½±´¹¹Ôì£¬Ò²¾ÍÊÇ Ã°ºÅ ºóÃæµÄÈı¸ö¶«Î÷
+// _iocã€_acceptorå’Œ_socketéƒ½æ˜¯ç§æœ‰å˜é‡ï¼Œè€Œæ„é€ å‡½æ•°ä¸­æ²¡æœ‰æä¾›ï¼Œæ‰€ä»¥ç¨‹åºä¼šè°ƒç”¨é»˜è®¤æ„é€ 
+// ä¸ºäº†è®©å…¶æ­£å¸¸æ„é€ ï¼Œéœ€è¦ä½¿ç”¨æ‹·è´æ„é€ ï¼Œä¹Ÿå°±æ˜¯ å†’å· åé¢çš„ä¸‰ä¸ªä¸œè¥¿
 CServer::CServer(boost::asio::io_context& ioc, unsigned short& port) 
-	:_ioc(ioc), // µ×²ãÒì²½I/Oµ÷¶ÈÆ÷
-	 _acceptor(ioc, tcp::endpoint(tcp::v4(), port)),  // ½ÓÈëioc£¬²¢¼àÌı±¾»úËùÓĞIPv4:port¶Ë¿Ú
-	 _socket(ioc) // ÓÃÓÚºóĞø½ÓÊÜÁ´½ÓºóµÄÊı¾İÍ¨Ñ¶
+	:_ioc(ioc), // åº•å±‚å¼‚æ­¥I/Oè°ƒåº¦å™¨
+	 _acceptor(ioc, tcp::endpoint(tcp::v4(), port))  // æ¥å…¥iocï¼Œå¹¶ç›‘å¬æœ¬æœºæ‰€æœ‰IPv4:portç«¯å£
 {
-	std::cout << "ÏÖÔÚÕıÔÚ¼àÌı 0.0.0.0 µÄ 8080 ¶Ë¿Ú" << std::endl;
+	std::cout << "ç°åœ¨æ­£åœ¨ç›‘å¬ 0.0.0.0 çš„ 8080 ç«¯å£" << std::endl;
 }
 
 void CServer::Start() {
-	auto self = shared_from_this(); // ÖÇÄÜÖ¸Õë£¬·ÀÖ¹±»Îö¹¹ºóÌáÇ°ÊÍ·Åµô
-	// ²¶»ñselfÖ¸Õë
-	// ½«Á¬½Ó´«¸øsocket£¬ÎŞÂÛ³É¹¦»¹ÊÇÊ§°Ü¶¼»áÓĞ»Øµ÷£¬»Øµ÷ĞèÒª´«ÈëErrorCode
-	// Èç¹ûÃ»ÓĞ´íÎó£¬ÔòErrorCodeÎª¿Õ
-	// async_accpet ÊÇÓÃÓÚ¼àÌıÒì²½Á¬½ÓµÄ
-	_acceptor.async_accept(_socket, [self](beast::error_code ec) {
+	auto self = shared_from_this(); // æ™ºèƒ½æŒ‡é’ˆï¼Œé˜²æ­¢è¢«ææ„åæå‰é‡Šæ”¾æ‰
+	// æ•è·selfæŒ‡é’ˆ
+	// å°†è¿æ¥ä¼ ç»™socketï¼Œæ— è®ºæˆåŠŸè¿˜æ˜¯å¤±è´¥éƒ½ä¼šæœ‰å›è°ƒï¼Œå›è°ƒéœ€è¦ä¼ å…¥ErrorCode
+	// å¦‚æœæ²¡æœ‰é”™è¯¯ï¼Œåˆ™ErrorCodeä¸ºç©º
+	// async_accpet æ˜¯ç”¨äºç›‘å¬å¼‚æ­¥è¿æ¥çš„
+	auto& io_context = AsioIOServicePool::GetInstance()->GetIOService();
+	std::shared_ptr<HttpConnection> new_con = std::make_shared<HttpConnection>(io_context);
+	_acceptor.async_accept(new_con->GetSocket(), [self, new_con](beast::error_code ec) {
 		try {
 			if (ec) {
-				std::cout << "Òì²½½ÓÊÜ·¢Éú´íÎó£¬ÕıÔÚÖØĞÂ¼àÌı" << std::endl;
-				self->Start(); // ÖØĞÂ¼àÌı
+				std::cout << "å¼‚æ­¥æ¥å—å‘ç”Ÿé”™è¯¯ï¼Œæ­£åœ¨é‡æ–°ç›‘å¬" << std::endl;
+				self->Start(); // é‡æ–°ç›‘å¬
 				return;
 			}
 
-			// ´´½¨ĞÂÁ´½Ó£¬´´½¨HttpConnectionÀàÀ´¹ÜÀíÕâ¸öÁ¬½Ó
-			std::make_shared<HttpConnection>(std::move(self->_socket))->Start();
+			// åˆ›å»ºæ–°é“¾æ¥ï¼Œåˆ›å»ºHttpConnectionç±»æ¥ç®¡ç†è¿™ä¸ªè¿æ¥
+			new_con->Start();
 
-			// ¼ÌĞø¼àÌı
+			// ç»§ç»­ç›‘å¬
 			self->Start();
 		}
 		catch (std::exception exp) {
-			std::cout << "´íÎóÊÇ" << exp.what() << std::endl;
+			std::cout << "é”™è¯¯æ˜¯" << exp.what() << std::endl;
 			self->Start();
 		}
 		});
