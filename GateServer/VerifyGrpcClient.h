@@ -31,8 +31,19 @@ public:
 	}
 
 	~RPConPool(){
-
+		std::lock_guard<std::mutex> lock(mutex_);
+		while (!connections_.empty()) {
+			connections_.pop();
+		}
 	}
+
+	void Close(){
+		std::lock_guard<std::mutex> lock(mutex_);
+		b_stop = true;
+		cond_.notify_all(); // 通知所有等待的线程
+	}
+	
+	
 private:
 	std::atomic<bool> b_stop;
 	size_t poolSize;
