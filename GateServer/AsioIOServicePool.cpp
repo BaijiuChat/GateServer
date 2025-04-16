@@ -32,9 +32,16 @@ AsioIOServicePool::AsioIOServicePool(std::size_t size) :
     }
 }
 
+// AsioIOServicePool.cpp 中的析构函数
 AsioIOServicePool::~AsioIOServicePool() {
-    Stop();
-    std::cout << "AsioIOServicePool destruct" << endl;
+    std::cout << "AsioIOServicePool destruct beginning" << endl;
+    try {
+        Stop();
+        std::cout << "AsioIOServicePool destruct complete" << endl;
+    }
+    catch (const std::exception& e) {
+        std::cerr << "Error during AsioIOServicePool destruction: " << e.what() << endl;
+    }
 }
 
 // 叫号机按轮询分配窗口（顾客1去窗口A，顾客2去窗口B，顾客3又回到窗口A，公平分配）。
@@ -46,20 +53,22 @@ boost::asio::io_context& AsioIOServicePool::GetIOService() {
     return service;
 }
 
+// Stop 方法优化
 void AsioIOServicePool::Stop() {
-    // 因为仅仅执行work.reset并不能让iocontext从run的状态中退出
-    // 当iocontext已经绑定了读或写的监听事件后，还需要手动stop该服务。
-
-    // 停止当前的所有io_service
-    for (auto& io_service : _ioServices) {
-        io_service.stop();
-    }
-    // 通知不再接受新的工作
+    // 先重置工作守卫，这样io_service知道不会有新工作了
     for (auto& work : _works) {
         work.reset();
     }
-    // 回收线程
+
+    // 然后停止io_service，确保所有待处理工作都被取消
+    for (auto& io_service : _ioServices) {
+        io_service.stop();
+    }
+
+    // 最后等待所有线程完成
     for (auto& t : _threads) {
-        t.join();
+        if (t.joinable()) {
+            t.join();
+        }
     }
 }

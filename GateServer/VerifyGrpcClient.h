@@ -52,16 +52,29 @@ public:
 		cond_.notify_all(); // 通知所有等待的线程
 	}
 	
-	std::unique_ptr<VerifyService::Stub> GetConnection(){
+	std::unique_ptr<VerifyService::Stub> GetConnection(int timeout_ms = 5000) {
 		std::unique_lock<std::mutex> lock(mutex_);
-		cond_.wait(lock, [this](){
-			if(b_stop) return true;
-			return !connections_.empty();
-			});
-		if(b_stop) return nullptr;
-		auto context = std::move(connections_.front());
+
+		// 带超时的等待
+		if (!cond_.wait_for(lock, std::chrono::milliseconds(timeout_ms), [this]() {
+			return b_stop || !connections_.empty();
+			})) {
+			// 策略1: 返回nullptr（由调用方处理）
+			// return nullptr;
+
+			// 策略2: 弹性新建连接（需确保线程安全）
+			auto channel = grpc::CreateCustomChannel(
+				host_ + ":" + port_,
+				grpc::InsecureChannelCredentials(),
+				grpc::ChannelArguments()
+			);
+			return VerifyService::NewStub(channel);
+		}
+
+		if (b_stop) return nullptr;
+		auto stub = std::move(connections_.front());
 		connections_.pop();
-		return context;
+		return stub;
 	}
 
 	void ReturnConnection(std::unique_ptr<VerifyService::Stub> context){
@@ -84,23 +97,29 @@ class VerifyGrpcClient : public Singleton<VerifyGrpcClient>
 {
 	friend class Singleton<VerifyGrpcClient>;
 public:
-	GetVerifyRsp GetVerifyCode(const std::string& email){
+	// 修改 GetVerifyCode 方法处理连接获取失败的情况
+	GetVerifyRsp GetVerifyCode(const std::string& email) {
 		GetVerifyReq request;
 		GetVerifyRsp reply;
-		ClientContext context;;
-		auto stub = pool_->GetConnection();
+		ClientContext context;
+
+		auto stub = pool_->GetConnection(2000); // 给2秒超时时间
+		if (!stub) {
+			reply.set_error(ErrorCodes::RPCFailed);
+			std::cout << "无法获取RPC连接" << std::endl;
+			return reply;
+		}
+
 		request.set_email(email);
 		Status status = stub->GetVerifyCode(&context, request, &reply);
-		if (status.ok()) {
-			pool_->ReturnConnection(std::move(stub));
-			return reply;
-		}
-		else {
-			pool_->ReturnConnection(std::move(stub));
+		pool_->ReturnConnection(std::move(stub));
+
+		if (!status.ok()) {
 			reply.set_error(ErrorCodes::RPCFailed);
-			std::cout << "RPC failed: " << status.error_code() << ": " << status.error_message() << std::endl;
-			return reply;
+			std::cout << "RPC调用失败: " << status.error_code() << ": " << status.error_message() << std::endl;
 		}
+
+		return reply;
 	}
 private:
 	VerifyGrpcClient();
