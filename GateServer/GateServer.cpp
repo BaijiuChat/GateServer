@@ -3,9 +3,35 @@
 #include <iostream>
 #include <cstdlib>      // 用于 EXIT_FAILURE
 #include <boost/asio/signal_set.hpp>
+#include <cassert>
+#include "RedisMgr.h"
+
+// void TestRedisMgr() {
+//	assert(RedisMgr::GetInstance()->Connect("127.0.0.1", 6379));
+//	assert(RedisMgr::GetInstance()->Auth("root"));
+//	assert(RedisMgr::GetInstance()->Set("blogwebsite", "llfc.club"));
+//	std::string value = "";
+//	assert(RedisMgr::GetInstance()->Get("blogwebsite", value));
+//	assert(RedisMgr::GetInstance()->Get("nonekey", value) == false);
+//	assert(RedisMgr::GetInstance()->HSet("bloginfo", "blogwebsite", "llfc.club"));
+//	assert(RedisMgr::GetInstance()->HGet("bloginfo", "blogwebsite") != "");
+//	assert(RedisMgr::GetInstance()->ExistsKey("bloginfo"));
+//	assert(RedisMgr::GetInstance()->Del("bloginfo"));
+//	assert(RedisMgr::GetInstance()->Del("bloginfo"));
+//	assert(RedisMgr::GetInstance()->ExistsKey("bloginfo") == false);
+//	assert(RedisMgr::GetInstance()->LPush("lpushkey1", "lpushvalue1"));
+//	assert(RedisMgr::GetInstance()->LPush("lpushkey1", "lpushvalue2"));
+//	assert(RedisMgr::GetInstance()->LPush("lpushkey1", "lpushvalue3"));
+//	assert(RedisMgr::GetInstance()->RPop("lpushkey1", value));
+//	assert(RedisMgr::GetInstance()->RPop("lpushkey1", value));
+//	assert(RedisMgr::GetInstance()->LPop("lpushkey1", value));
+//	assert(RedisMgr::GetInstance()->LPop("lpushkey2", value) == false);
+//	RedisMgr::GetInstance()->Close();
+//}
 
 int main()
 {
+	// TestRedisMgr(); // 测试RedisMgr
 	auto& g_config_mgr = ConfigMgr::Inst(); // 创建ConfigMgr实例
 	std::string gate_port_str = g_config_mgr["GateServer"]["port"];
 	unsigned short gate_port = atoi(gate_port_str.c_str());
