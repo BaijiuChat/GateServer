@@ -31,6 +31,9 @@
 
 int main()
 {
+	SetConsoleOutputCP(CP_UTF8); // 输出编码
+	SetConsoleCP(CP_UTF8); // 输入编码
+	// system("chcp 65001");
 	// TestRedisMgr(); // 测试RedisMgr
 	auto& g_config_mgr = ConfigMgr::Inst(); // 创建ConfigMgr实例
 	std::string gate_port_str = g_config_mgr["GateServer"]["port"];
