@@ -6,10 +6,10 @@
 #include <cassert>
 #include "RedisMgr.h"
 
- void TestRedisMgr() {
-	//assert(RedisMgr::GetInstance()->Connect("127.0.0.1", 6379));
-	//assert(RedisMgr::GetInstance()->Auth("root"));
-	assert(RedisMgr::GetInstance()->Set("blogwebsite", "llfc.club"));
+ //void TestRedisMgr() {
+	//assert(RedisMgr::GetInstance()->Connect("127.0.0.1", 6379));	// 不需要
+	//assert(RedisMgr::GetInstance()->Auth("root"));				// 不需要
+	/*assert(RedisMgr::GetInstance()->Set("blogwebsite", "llfc.club"));
 	std::string value = "";
 	assert(RedisMgr::GetInstance()->Get("blogwebsite", value));
 	assert(RedisMgr::GetInstance()->Get("nonekey", value) == false);
@@ -25,9 +25,9 @@
 	assert(RedisMgr::GetInstance()->RPop("lpushkey1", value));
 	assert(RedisMgr::GetInstance()->RPop("lpushkey1", value));
 	assert(RedisMgr::GetInstance()->LPop("lpushkey1", value));
-	assert(RedisMgr::GetInstance()->LPop("lpushkey2", value) == false);
-	//RedisMgr::GetInstance()->Close();
-}
+	assert(RedisMgr::GetInstance()->LPop("lpushkey2", value) == false);*/
+	//RedisMgr::GetInstance()->Close();  // 不需要
+//}
 
 int main()
 {

@@ -5,7 +5,7 @@
 #include <boost/beast/core/ostream.hpp>
 #include <json/json.h>
 #include <json/reader.h>
-//#include "RedisMgr.h"
+#include "RedisMgr.h"
 
 void LogicSystem::RegGet(std::string url, HttpHandler handler)
 {
@@ -19,6 +19,7 @@ void LogicSystem::RegPost(std::string url, HttpHandler handler)
 
 LogicSystem::LogicSystem()
 {
+	// get测试模块
 	RegGet("/get_test", [](std::shared_ptr<HttpConnection> connection) {
 		std::cout << "正在处理 get_test 测试业务。\n";
 		beast::ostream(connection->_response.body()) << "received get_test request\n";
@@ -30,6 +31,8 @@ LogicSystem::LogicSystem()
 		}
 		});
 
+
+	// 发送验证码模块
 	RegPost("/get_verifycode", [](std::shared_ptr<HttpConnection> connection) {
 		std::cout << "正在处理 get_verifycode 测试业务。\n";
 		auto body_str = beast::buffers_to_string(connection->_request.body().data());
@@ -40,6 +43,7 @@ LogicSystem::LogicSystem()
 		Json::Reader reader;
 		Json::Value src_root;
 		bool parse_success = reader.parse(body_str, src_root);
+
 		if (!parse_success || !src_root.isMember("email")) {
 			std::cout << "Json参数不正确，无法解析" << std::endl;
 			root["error"] = ErrorCodes::Error_Json;
@@ -47,6 +51,7 @@ LogicSystem::LogicSystem()
 			beast::ostream(connection->_response.body()) << jsonstr;
 			return true;
 		}
+
 		auto email = src_root["email"].asString();
 		GetVerifyRsp rsp = VerifyGrpcClient::GetInstance()->GetVerifyCode(email);
 		std::cout << "\nemail is " << email << "\n\n";
@@ -57,62 +62,85 @@ LogicSystem::LogicSystem()
 		return true;
 		});
 
-	//RegPost("/user_register", [](std::shared_ptr<HttpConnection> connection) {
-	//	auto body_str = boost::beast::buffers_to_string(connection->_request.body().data());
-	//	std::cout << "receive body is " << body_str << std::endl;
-	//	connection->_response.set(http::field::content_type, "text/json");
-	//	Json::Value root;
-	//	Json::Reader reader;
-	//	Json::Value src_root;
-	//	bool parse_success = reader.parse(body_str, src_root);
-	//	if (!parse_success) {
-	//		std::cout << "Failed to parse JSON data!" << std::endl;
-	//		root["error"] = ErrorCodes::Error_Json;
-	//		std::string jsonstr = root.toStyledString();
-	//		beast::ostream(connection->_response.body()) << jsonstr;
-	//		return true;
-	//	}
-	//	//先查找redis中email对应的验证码是否合理
-	//	std::string  verify_code;
-	//	bool b_get_verify = RedisMgr::GetInstance()->Get(src_root["email"].asString(), verify_code);
-	//	if (!b_get_verify) {
-	//		std::cout << " get verify code expired" << std::endl;
-	//		root["error"] = ErrorCodes::verifyExpired;
-	//		std::string jsonstr = root.toStyledString();
-	//		beast::ostream(connection->_response.body()) << jsonstr;
-	//		return true;
-	//	}
 
-	//	if (verify_code != src_root["verifycode"].asString()) {
-	//		std::cout << " verify code error" << std::endl;
-	//		root["error"] = ErrorCodes::verifyCodeErr;
-	//		std::string jsonstr = root.toStyledString();
-	//		beast::ostream(connection->_response.body()) << jsonstr;
-	//		return true;
-	//	}
+	// 用户注册模块
+	RegPost("/user_register", [](std::shared_ptr<HttpConnection> connection) {
+		auto body_str = boost::beast::buffers_to_string(connection->_request.body().data());
+		std::cout << "receive body is " << body_str << std::endl;
+		connection->_response.set(http::field::content_type, "text/json");
+		Json::Value root;
+		Json::Reader reader;
+		Json::Value src_root;
+		bool parse_success = reader.parse(body_str, src_root);
+		if (!parse_success) {
+			std::cout << "Failed to parse JSON data!" << std::endl;
+			root["error"] = ErrorCodes::Error_Json;
+			std::string jsonstr = root.toStyledString();
+			beast::ostream(connection->_response.body()) << jsonstr;
+			return true;
+		}
 
-	//	//访问redis查找
-	//	bool b_usr_exist = RedisMgr::GetInstance()->ExistsKey(src_root["user"].asString());
-	//	if (b_usr_exist) {
-	//		std::cout << " user exist" << std::endl;
-	//		root["error"] = ErrorCodes::UserExist;
-	//		std::string jsonstr = root.toStyledString();
-	//		beast::ostream(connection->_response.body()) << jsonstr;
-	//		return true;
-	//	}
+		auto email = src_root["email"].asString();
+		auto user = src_root["user"].asString();
+		auto pwd = src_root["passwd"].asString();
+		auto confirm = src_root["confirm"].asString();
 
-	//	//查找数据库判断用户是否存在
+		if (pwd != confirm) {
+			std::cout << "确认密码错误 " << std::endl;
+			root["error"] = ErrorCodes::PasswdErr;
+			std::string jsonstr = root.toStyledString();
+			beast::ostream(connection->_response.body()) << jsonstr;
+			return true;
+		}
 
-	//	root["error"] = 0;
-	//	root["email"] = src_root["email"];
-	//	root["user"] = src_root["user"].asString();
-	//	root["passwd"] = src_root["passwd"].asString();
-	//	root["confirm"] = src_root["confirm"].asString();
-	//	root["verifycode"] = src_root["verifycode"].asString();
-	//	std::string jsonstr = root.toStyledString();
-	//	beast::ostream(connection->_response.body()) << jsonstr;
-	//	return true;
-	//	});
+		/*if (!src_root.isMember("email") || !src_root.isMember("user") || !src_root.isMember("passwd") || !src_root.isMember("confirm")) {
+			std::cout << "Json参数不正确，无法解析" << std::endl;
+			root["error"] = ErrorCodes::Error_Json;
+			std::string jsonstr = root.toStyledString();
+			beast::ostream(connection->_response.body()) << jsonstr;
+			return true;
+		}*/
+
+		//先查找redis中email对应的验证码是否合理
+		std::string  verify_code;
+		bool b_get_verify = RedisMgr::GetInstance()->Get(CODEPREFIX+src_root["email"].asString(), verify_code);
+		if (!b_get_verify) {
+			std::cout << " 验证码已过期 " << std::endl;
+			root["error"] = ErrorCodes::VerifyExpired;
+			std::string jsonstr = root.toStyledString();
+			beast::ostream(connection->_response.body()) << jsonstr;
+			return true;
+		}
+
+		if (verify_code != src_root["verifycode"].asString()) {
+			std::cout << " 验证码错误 " << std::endl;
+			root["error"] = ErrorCodes::VerifyCodeErr;
+			std::string jsonstr = root.toStyledString();
+			beast::ostream(connection->_response.body()) << jsonstr;
+			return true;
+		}
+
+		//访问redis查找  （通过mysql）
+		/*bool b_usr_exist = RedisMgr::GetInstance()->ExistsKey(src_root["user"].asString());
+		if (b_usr_exist) {
+			std::cout << " 用户已存在 " << std::endl;
+			root["error"] = ErrorCodes::UserExist;
+			std::string jsonstr = root.toStyledString();
+			beast::ostream(connection->_response.body()) << jsonstr;
+			return true;
+		}*/
+
+		//查找数据库判断用户是否存在
+		root["error"] = 0;
+		root["email"] = email;
+		root["user"] = user;
+		root["passwd"] = pwd;
+		root["confirm"] = confirm;
+		root["verifycode"] = src_root["verifycode"].asString();
+		std::string jsonstr = root.toStyledString();
+		beast::ostream(connection->_response.body()) << jsonstr;
+		return true;
+		});
 }
 
 bool LogicSystem::HandleGet(std::string path, std::shared_ptr<HttpConnection> con)
