@@ -14,10 +14,14 @@ public:
     void Close();
 
 private:
+    redisContext* createConnection();
+    bool isConnectionAlive(redisContext* context);
+
     std::atomic<bool> b_stop_;
     size_t poolSize_;
     const char* host_;
     int port_;
+    std::string password_;
     std::queue<redisContext*> connections_;
     std::mutex mutex_;
     std::condition_variable cond_;
@@ -28,7 +32,6 @@ class RedisMgr : public Singleton<RedisMgr>
     friend class Singleton<RedisMgr>;
 public:
     ~RedisMgr();
-    bool Connect(const std::string& host, int port);
     bool Get(const std::string& key, std::string& value);
     bool Set(const std::string& key, const std::string& value);
     bool Auth(const std::string& password);
@@ -45,7 +48,6 @@ public:
 private:
     RedisMgr();
 
-    redisContext* _connect;
-    redisReply* _reply;
+    std::unique_ptr<RedisConPool> _con_pool;
 };
 
