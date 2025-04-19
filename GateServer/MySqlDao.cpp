@@ -63,7 +63,7 @@ void MySqlPool::checkConnection()
 			std::cout << "MySQL链接存活，操作时间为：" << timestamp << std::endl;
 		}
 		catch (sql::SQLException& e) {
-			std::cerr << "MySQL链接失效，重新创建连接" << std::endl;
+			std::cerr << "MySQL链接失效，重新创建连接，错误为：" << e.what() << std::endl;
 			sql::mysql::MySQL_Driver* driver = sql::mysql::get_driver_instance();
 			sql::Connection* newCon = driver->connect(url_, user_, pass_);
 			newCon->setSchema(schema_);
