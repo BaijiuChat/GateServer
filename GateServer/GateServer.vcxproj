@@ -71,13 +71,13 @@
   </ImportGroup>
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
-    <IncludePath>D:\jsoncpp-0.y.z\include;$(IncludePath)</IncludePath>
-    <LibraryPath>D:\jsoncpp-0.y.z\makefiles\vs71\x64\libjson;$(LibraryPath)</LibraryPath>
+    <IncludePath>D:\MySQL Server 8.4\Connector\C++-debug-9.3.0\include;D:\jsoncpp-0.y.z\include;$(IncludePath)</IncludePath>
+    <LibraryPath>D:\MySQL Server 8.4\Connector\C++-debug-9.3.0\lib64\vs14;D:\jsoncpp-0.y.z\makefiles\vs71\x64\libjson;$(LibraryPath)</LibraryPath>
     <ExternalIncludePath>$(ExternalIncludePath)</ExternalIncludePath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
-    <IncludePath>D:\jsoncpp-0.y.z\include;$(IncludePath)</IncludePath>
-    <LibraryPath>D:\jsoncpp-0.y.z\makefiles\vs71\x64\libjson;$(LibraryPath)</LibraryPath>
+    <IncludePath>D:\MySQL Server 8.4\Connector\C++-release-9.3.0\include;D:\jsoncpp-0.y.z\include;$(IncludePath)</IncludePath>
+    <LibraryPath>D:\MySQL Server 8.4\Connector\C++-release-9.3.0\lib64\vs14;D:\jsoncpp-0.y.z\makefiles\vs71\x64\libjson;$(LibraryPath)</LibraryPath>
     <ExternalIncludePath>$(ExternalIncludePath)</ExternalIncludePath>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
@@ -155,6 +155,7 @@
     <ClCompile Include="LogicSystem.cpp" />
     <ClCompile Include="message.grpc.pb.cc" />
     <ClCompile Include="message.pb.cc" />
+    <ClCompile Include="MySqlDao.cpp" />
     <ClCompile Include="RedisMgr.cpp" />
     <ClCompile Include="VerifyGrpcClient.cpp" />
   </ItemGroup>
@@ -163,10 +164,12 @@
     <ClInclude Include="ConfigMgr.h" />
     <ClInclude Include="const.h" />
     <ClInclude Include="CServer.h" />
+    <ClInclude Include="Defer.h" />
     <ClInclude Include="HttpConnection.h" />
     <ClInclude Include="LogicSystem.h" />
     <ClInclude Include="message.grpc.pb.h" />
     <ClInclude Include="message.pb.h" />
+    <ClInclude Include="MySqlDao.h" />
     <ClInclude Include="RedisMgr.h" />
     <ClInclude Include="Singleton.h" />
     <ClInclude Include="VerifyGrpcClient.h" />
