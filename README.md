@@ -2,7 +2,7 @@
 不要看！害羞！
 我还在学习中！
 ### ** 配置环境 **
-1. 下载jsoncpp的0.y.z版本，通过编译获取两个库（release和debug），注意release需要在项目属性中调成无分页。
+1. 下载jsoncpp的0.y.z版本，通过编译获取两个库（release和debug），注意release需要在项目属性中调成无分页。其他参见https://blog.csdn.net/m0_52143936/article/details/124815509
 2. 在项目属性C++常规和链接器常规中包含jsoncpp的include、makefiles\vs71\x64\libjson中的两个lib（复制到新建文件夹libjson）
    D:\jsoncpp-0.y.z\include;$(IncludePath)
    D:\jsoncpp-0.y.z\makefiles\vs71\x64\libjson;$(LibraryPath)
