@@ -183,3 +183,95 @@ MySqlPool::~MySqlPool()
 {
     Close(); // 确保资源被正确释放
 }
+
+/// MySqlDao函数
+/// //////////////////////////////////////////////////////////////
+/// MySqlDao函数
+
+MySqlDao::MySqlDao()
+{
+    auto& config = ConfigMgr::Inst();
+    const auto& host = config["MySQL"]["Host"];
+    const auto& port = config["MySQL"]["Port"];
+    const auto& user = config["MySQL"]["User"];
+    const auto& pwd = config["MySQL"]["Passwd"];
+    const auto& schema = config["MySQL"]["Schema"];
+    const auto& poolSize = std::stoi(config["MySQL"]["PoolSize"]);
+	pool_.reset(new MySqlPool(host + ":" + port, user, pwd, schema, poolSize));
+}
+
+MySqlDao::~MySqlDao()
+{
+	pool_->Close();
+}
+
+int MySqlDao::RegUser(const std::string& name, const std::string& email, const std::string& pwd)
+{
+    auto con = pool_->getConnection();
+    if (!con) return -2; // 获取连接失败，返回特定错误码
+
+    try
+    {
+        std::unique_ptr<sql::PreparedStatement> pstmt(con->_con->prepareStatement("CALL reg_user(?,?,?,@result)"));
+        pstmt->setString(1, name);
+        pstmt->setString(2, email);
+        pstmt->setString(3, pwd);
+        pstmt->execute();
+
+        std::unique_ptr<sql::Statement> stmtResult(con->_con->createStatement());
+        std::unique_ptr<sql::ResultSet> res(stmtResult->executeQuery("SELECT @result AS result"));
+
+        int result = -3; // 默认错误码，表示未获取到结果
+        if (res->next()) {
+            result = res->getInt("result");
+            std::cout << "用户注册结果: " << result << std::endl;
+        }
+
+        // 无论是否获取到结果，都返回连接并返回结果
+        pool_->returnConnection(std::move(con));
+        return result;
+    }
+    catch (sql::SQLException& e)
+    {
+        // 先记录错误
+        std::cerr << "SQLException: " << e.what();
+        std::cerr << " (MySQL error code: " << e.getErrorCode();
+        std::cerr << ", SQLState: " << e.getSQLState() << " )" << std::endl;
+        // 确保连接被返回到池中
+        try {
+            if (con) {
+                pool_->returnConnection(std::move(con));
+            }
+        }
+        catch (...) {
+            std::cerr << "返回连接到池中时发生异常" << std::endl;
+        }
+        return -1; // SQL异常错误码
+    }
+    catch (std::exception& e)
+    {
+        std::cerr << "标准异常: " << e.what() << std::endl;
+        try {
+            if (con) {
+                pool_->returnConnection(std::move(con));
+            }
+        }
+        catch (...) {
+            std::cerr << "返回连接到池中时发生异常" << std::endl;
+        }
+        return -4; // 一般异常错误码
+    }
+    catch (...)
+    {
+        std::cerr << "未知异常" << std::endl;
+        try {
+            if (con) {
+                pool_->returnConnection(std::move(con));
+            }
+        }
+        catch (...) {
+            std::cerr << "返回连接到池中时发生异常" << std::endl;
+        }
+        return -5; // 未知异常错误码
+    }
+}

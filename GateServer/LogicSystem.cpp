@@ -6,6 +6,7 @@
 #include <json/json.h>
 #include <json/reader.h>
 #include "RedisMgr.h"
+#include "MySqlMgr.h"
 
 void LogicSystem::RegGet(std::string url, HttpHandler handler)
 {
@@ -154,11 +155,40 @@ LogicSystem::LogicSystem()
 			return true;
 		}
 
-		// 访问redis查找用户是否存在
-		bool b_usr_exist = RedisMgr::GetInstance()->ExistsKey(user);
-		if (b_usr_exist) {
-			std::cout << " 用户已存在 " << std::endl;
-			root["error"] = ErrorCodes::UserExist;
+		// 访问MySQL查找用户是否存在
+		int uid = MySqlMgr::GetInstance()->RegUser(user, email, pwd);
+		if (uid <= 0) {  // 捕获所有错误情况
+			// 根据不同错误码给出不同的错误信息
+			switch (uid) {
+			case 0:
+				std::cout << "用户名或邮箱已存在" << std::endl;
+				root["error"] = ErrorCodes::SQLFailed;
+				break;
+			case -1:
+				std::cout << "SQL异常" << std::endl;
+				root["error"] = ErrorCodes::SQLFailed;
+				break;
+			case -2:
+				std::cout << "无法获取数据库连接" << std::endl;
+				root["error"] = ErrorCodes::DatabaseConnectionFailed;
+				break;
+			case -3:
+				std::cout << "存储过程未返回结果" << std::endl;
+				root["error"] = ErrorCodes::DatabaseProcedureError;
+				break;
+			case -4:
+				std::cout << "发生标准异常" << std::endl;
+				root["error"] = ErrorCodes::GeneralException;
+				break;
+			case -5:
+				std::cout << "发生未知异常" << std::endl;
+				root["error"] = ErrorCodes::UnknownException;
+				break;
+			default:
+				std::cout << "未预期的错误码: " << uid << std::endl;
+				root["error"] = ErrorCodes::UnknownError;
+				break;
+			}
 			std::string jsonstr = root.toStyledString();
 			beast::ostream(connection->_response.body()) << jsonstr;
 			return true;

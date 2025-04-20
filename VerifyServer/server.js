@@ -21,7 +21,7 @@ async function GetVerifyCode(call, callback) {
         const uniqueId = generateSixDigitCode();
         const redisKey = const_module.code_prefix+call.request.email;
         // 只是为了方便测试，过期时间设置为了15秒
-        const bres = await redis_module.SetRedisExpire(redisKey, uniqueId, 15);
+        const bres = await redis_module.SetRedisExpire(redisKey, uniqueId, 300);
         if(!bres){
             console.log("set redis error is ", bres)
             callback(null, { 

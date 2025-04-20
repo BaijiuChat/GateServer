@@ -2,13 +2,16 @@
 #include <iostream>
 #include <memory> // unique_ptr
 #include <cstdint> // int64_t  
+#include <cstdlib>
 #include <mutex>
 #include <atomic>
 #include <thread>
 #include <chrono>
 #include <queue>
+#include <string>
 // Defer头文件实现一个简单的RAII类，用于在作用域结束时自动调用指定的函数
 #include "Defer.h"
+#include "ConfigMgr.h"
 // MySQL Connector/C++ JDBC 接口头文件
 #include <jdbc/mysql_driver.h>
 #include <jdbc/cppconn/connection.h>
@@ -16,7 +19,6 @@
 #include <jdbc/cppconn/resultset.h>
 #include <jdbc/cppconn/statement.h>
 #include <jdbc/cppconn/exception.h>
-
 
 class SqlConnection 
 {
@@ -52,4 +54,25 @@ private:
     std::condition_variable cond_; // 池子为空时让线程等待
     std::atomic<bool> b_stop_{ false }; // 池子停止时让线程退出
 	std::thread _check_thread;
+};
+
+class MySqlDao 
+{
+public:
+	MySqlDao();
+	~MySqlDao();
+	int RegUser(const std::string& name, const std::string& email, const std::string& pwd);
+	/*bool CheckEmail(const std::string& name, const std::string& email);
+	bool UpdatePwd(const std::string& name, const std::string& pwd);
+	bool CheckPwd(const std::string& name, const std::string& pwd, UserInfo& userInfo);*/
+private:
+	std::unique_ptr<MySqlPool> pool_;
+};
+
+struct UserInfo
+{
+    int uid;
+	std::string name;
+	std::string pwd;
+	std::string email;
 };
