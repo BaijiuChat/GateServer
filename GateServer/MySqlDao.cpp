@@ -31,12 +31,18 @@ MySqlPool::MySqlPool(const std::string& url, const std::string& user, const std:
 	}
 	catch (sql::SQLException& e) {
 		std::cerr << "Error: " << e.what() << std::endl;
+		Close(); // 发生异常时关闭连接池
+		throw; // 重新抛出异常
 	}
 	catch (std::exception& e) {
 		std::cerr << "Error: " << e.what() << std::endl;
+		Close(); // 发生异常时关闭连接池
+		throw; // 重新抛出异常
 	}
 	catch (...) {
 		std::cerr << "Unknown error" << std::endl;
+		Close(); // 发生异常时关闭连接池
+		throw; // 重新抛出异常
 	}
 }
 
@@ -53,7 +59,7 @@ void MySqlPool::checkConnection()
 			pool_.push(std::move(con));
 			});
 
-		if (con->_last_oper_time + 60 < timestamp)  // 超过60秒没有操作
+		if (con->_last_oper_time + 60 > timestamp)  // 超过60秒没有操作
 			continue;
 
 		try {
@@ -81,6 +87,43 @@ void MySqlPool::checkConnection()
 	}
 }
 
+std::unique_ptr<SqlConnection> MySqlPool::getConnection() 
+{
+	std::unique_lock<std::mutex> lock(mutex_);
+	cond_.wait(lock, [this] {
+		if (b_stop_) {
+			return true;
+		}
+		return !pool_.empty();
+		});
+	if (b_stop_) {
+		return nullptr; // 确保线程持有锁的时候检查新的b_stop_值
+	}
+	std::unique_ptr<SqlConnection> con(std::move(pool_.front()));
+	pool_.pop(); // 移除空指针
+	return con;
+}
+
+void MySqlPool::returnConnection(std::unique_ptr<SqlConnection> con)
+{
+	std::unique_lock<std::mutex> lock(mutex_);
+	if (b_stop_) {
+		return; // 如果池子已经停止，就不用返回连接了
+	}
+	pool_.push(std::move(con)); // 将连接放回池中
+	cond_.notify_one(); // 通知一个等待的线程
+}
+
+void MySqlPool::Close()
+{
+	b_stop_ = true; // 设置停止标志
+	cond_.notify_all(); // 通知所有等待的线程
+}
+
 MySqlPool::~MySqlPool()
 {
+	std::unique_lock<std::mutex> lock(mutex_);
+	while (!pool_.empty()) {
+		pool_.pop();
+	}
 }

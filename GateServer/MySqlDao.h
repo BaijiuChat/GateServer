@@ -36,6 +36,9 @@ public:
         const std::string& schema,
         int poolSize);
     void checkConnection();
+    std::unique_ptr<SqlConnection> getConnection();
+    void returnConnection(std::unique_ptr<SqlConnection>);
+    void Close();
 	~MySqlPool();
 
 private:
