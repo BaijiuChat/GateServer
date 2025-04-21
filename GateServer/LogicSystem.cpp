@@ -162,7 +162,7 @@ LogicSystem::LogicSystem()
 			switch (uid) {
 			case 0:
 				std::cout << "用户名或邮箱已存在" << std::endl;
-				root["error"] = ErrorCodes::SQLFailed;
+				root["error"] = ErrorCodes::UserEmailExists;
 				break;
 			case -1:
 				std::cout << "SQL异常" << std::endl;
