@@ -18,6 +18,59 @@ void LogicSystem::RegPost(std::string url, HttpHandler handler)
 	_post_handlers.insert(make_pair(url, handler));
 }
 
+// 统一处理错误并返回响应
+void handleErrorResponse(Json::Value& root, int errorCode, const std::string& customMessage = "") {
+	root["error"] = errorCode;
+
+	if (!customMessage.empty()) {
+		root["message"] = customMessage;
+	}
+	else {
+		// 为常见错误提供标准消息
+		switch (errorCode) {
+		case ErrorCodes::Error_Json:
+			root["message"] = "JSON格式错误或参数不完整";
+			break;
+		case ErrorCodes::VerifyExpired:
+			root["message"] = "验证码已过期";
+			break;
+		case ErrorCodes::VerifyCodeErr:
+			root["message"] = "验证码错误";
+			break;
+		case ErrorCodes::PasswdErr:
+			root["message"] = "两次输入的密码不一致";
+			break;
+		case ErrorCodes::UserEmailNotExists:
+			root["message"] = "用户名或邮箱不存在";
+			break;
+		case ErrorCodes::UserEmailExists:
+			root["message"] = "用户名或邮箱已存在";
+			break;
+		case ErrorCodes::SQLFailed:
+			root["message"] = "数据库操作异常";
+			break;
+		case ErrorCodes::DatabaseConnectionFailed:
+			root["message"] = "数据库连接失败";
+			break;
+		case ErrorCodes::DatabaseProcedureError:
+			root["message"] = "存储过程执行异常";
+			break;
+		case ErrorCodes::GeneralException:
+			root["message"] = "服务器发生异常";
+			break;
+		case ErrorCodes::UnknownException:
+			root["message"] = "服务器发生未知异常";
+			break;
+		case ErrorCodes::UnknownError:
+			root["message"] = "未定义的错误";
+			break;
+		default:
+			root["message"] = "系统错误";
+			break;
+		}
+	}
+}
+
 LogicSystem::LogicSystem()
 {
 	// get测试模块
@@ -162,31 +215,31 @@ LogicSystem::LogicSystem()
 			switch (uid) {
 			case 0:
 				std::cout << "用户名或邮箱已存在" << std::endl;
-				root["error"] = ErrorCodes::UserEmailExists;
+				handleErrorResponse(root, ErrorCodes::UserEmailExists);
 				break;
 			case -1:
 				std::cout << "SQL异常" << std::endl;
-				root["error"] = ErrorCodes::SQLFailed;
+				handleErrorResponse(root, ErrorCodes::SQLFailed);
 				break;
 			case -2:
 				std::cout << "无法获取数据库连接" << std::endl;
-				root["error"] = ErrorCodes::DatabaseConnectionFailed;
+				handleErrorResponse(root, ErrorCodes::DatabaseConnectionFailed);
 				break;
 			case -3:
 				std::cout << "存储过程未返回结果" << std::endl;
-				root["error"] = ErrorCodes::DatabaseProcedureError;
+				handleErrorResponse(root, ErrorCodes::DatabaseProcedureError);
 				break;
 			case -4:
 				std::cout << "发生标准异常" << std::endl;
-				root["error"] = ErrorCodes::GeneralException;
+				handleErrorResponse(root, ErrorCodes::GeneralException);
 				break;
 			case -5:
 				std::cout << "发生未知异常" << std::endl;
-				root["error"] = ErrorCodes::UnknownException;
+				handleErrorResponse(root, ErrorCodes::UnknownException);
 				break;
 			default:
 				std::cout << "未预期的错误码: " << uid << std::endl;
-				root["error"] = ErrorCodes::UnknownError;
+				handleErrorResponse(root, ErrorCodes::UnknownError, "未预期的错误码: " + std::to_string(uid));
 				break;
 			}
 			std::string jsonstr = root.toStyledString();
@@ -219,14 +272,50 @@ LogicSystem::LogicSystem()
 				root["error"] = ErrorCodes::Error_Json;
 				std::string jsonstr = root.toStyledString();
 				beast::ostream(connection->_response.body()) << jsonstr;
+				return true;
 			}
 
+			// 完善参数验证
+			if (!src_root.isMember("email") ||
+				!src_root.isMember("user") ||
+				!src_root.isMember("passwd") ||
+				!src_root.isMember("confirm") ||
+				!src_root.isMember("verifycode")) {
+				std::cout << "Json参数不完整" << std::endl;
+				root["error"] = ErrorCodes::Error_Json;
+				root["message"] = "参数不完整";
+				std::string jsonstr = root.toStyledString();
+				beast::ostream(connection->_response.body()) << jsonstr;
+				return true;
+			}
+
+			// 检查各字段是否为空
 			auto email = src_root["email"].asString();
 			auto user = src_root["user"].asString();
 			auto pwd = src_root["passwd"].asString();
+			auto confirm = src_root["confirm"].asString();
+			auto verifycode = src_root["verifycode"].asString();
 
+			if (email.empty() || user.empty() || pwd.empty() || confirm.empty() || verifycode.empty()) {
+				std::cout << "参数不能为空" << std::endl;
+				root["error"] = ErrorCodes::Error_Json;
+				root["message"] = "参数不能为空";
+				std::string jsonstr = root.toStyledString();
+				beast::ostream(connection->_response.body()) << jsonstr;
+				return true;
+			}
+
+			if (pwd != confirm) {
+				std::cout << "确认密码错误" << std::endl;
+				root["error"] = ErrorCodes::PasswdErr;
+				std::string jsonstr = root.toStyledString();
+				beast::ostream(connection->_response.body()) << jsonstr;
+				return true;
+			}
+
+			// 先查找redis中email对应的验证码是否合理
 			std::string verify_code;
-			bool b_get_verifycode = RedisMgr::GetInstance()->Get(CODEPREFIX + src_root["email"].asString(), verify_code);
+			bool b_get_verifycode = RedisMgr::GetInstance()->Get(CODEPREFIX + email, verify_code);
 			if (!b_get_verifycode) {
 				std::cout << "验证码过期了！" << std::endl;
 				root["error"] = ErrorCodes::VerifyExpired;
@@ -234,7 +323,8 @@ LogicSystem::LogicSystem()
 				beast::ostream(connection->_response.body()) << jsonstr;
 				return true;
 			}
-			if (verify_code != src_root["verifycode"].asString()) {
+
+			if (verify_code != verifycode) {
 				std::cout << "验证码错误！" << std::endl;
 				root["error"] = ErrorCodes::VerifyCodeErr;
 				std::string jsonstr = root.toStyledString();
@@ -242,18 +332,55 @@ LogicSystem::LogicSystem()
 				return true;
 			}
 
-			bool isMatch = MySqlMgr::GetInstance()->CheckEmail(user, email);
-			if (!isMatch) {
-				std::cout << "用户名或邮箱错误！" << std::endl;
-				root["error"] = ErrorCodes::UserMailNotMatch;
+			// 检查用户名和邮箱是否匹配
+			int checkResult = MySqlMgr::GetInstance()->CheckEmail(user, email);
+			if (checkResult != 0) {
+				std::cout << "用户名或邮箱错误！错误码: " << checkResult << std::endl;
+				switch (checkResult) {
+				case -2:
+					handleErrorResponse(root, ErrorCodes::ERR_NETWORK);
+					break;
+				case -6:
+					handleErrorResponse(root, ErrorCodes::UserEmailNotExists);
+					break;
+				case -7:
+					handleErrorResponse(root, ErrorCodes::UserMailNotMatch);
+					break;
+				}
 				std::string jsonstr = root.toStyledString();
 				beast::ostream(connection->_response.body()) << jsonstr;
 				return true;
 			}
-			bool b_up = MySqlMgr::GetInstance()->UpdatePwd(user, pwd);
-			if (!b_up) {
-				std::cout << "更新密码失败！" << std::endl;
-				root["error"] = ErrorCodes::PasswdUpFailed;
+			// 更新密码
+			int updateResult = MySqlMgr::GetInstance()->UpdatePwd(user, pwd);
+			if (updateResult != 0) {
+				std::cout << "更新密码失败！错误码: " << updateResult << std::endl;
+
+				// 根据错误码设置不同的错误信息
+				switch (updateResult) {
+				case -1:
+					handleErrorResponse(root, ErrorCodes::SQLFailed);
+					break;
+				case -2:
+					handleErrorResponse(root, ErrorCodes::DatabaseConnectionFailed);
+					break;
+				case -4:
+					handleErrorResponse(root, ErrorCodes::GeneralException);
+					break;
+				case -5:
+					handleErrorResponse(root, ErrorCodes::UnknownException);
+					break;
+				case -6:
+					handleErrorResponse(root, ErrorCodes::UserEmailNotExists);
+					break;
+				case -7:
+					handleErrorResponse(root, ErrorCodes::UserMailNotMatch);
+					break;
+				default:
+					handleErrorResponse(root, ErrorCodes::PasswdUpFailed, "密码更新失败，错误码: " + std::to_string(updateResult));
+					break;
+				}
+
 				std::string jsonstr = root.toStyledString();
 				beast::ostream(connection->_response.body()) << jsonstr;
 				return true;
@@ -263,8 +390,6 @@ LogicSystem::LogicSystem()
 			root["error"] = ErrorCodes::SUCCESS;
 			root["email"] = email;
 			root["user"] = user;
-			root["passwd"] = pwd;
-			root["verifycode"] = src_root["verify_code"].asString();
 			std::string jsonstr = root.toStyledString();
 			beast::ostream(connection->_response.body()) << jsonstr;
 			return true;
