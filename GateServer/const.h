@@ -37,7 +37,7 @@ RPCFailed = 1002,
 VerifyExpired = 1003,	//验证码过期
 VerifyCodeErr = 1004,	//验证码错误
 PasswdErr = 1006,		//密码错误
-EmailNotMatch = 1007,	//邮箱不匹配
+UserMailNotMatch = 1007,	//邮箱不匹配
 PasswdUpFailed = 1008,	//更新密码失败
 PasswdInvalid = 1009,	//密码更新失败
 
