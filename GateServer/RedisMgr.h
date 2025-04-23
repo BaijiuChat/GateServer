@@ -1,6 +1,9 @@
 #pragma once
 #include <atomic>
 #include <queue>
+#include <mutex>
+#include <condition_variable>
+#include <winsock2.h>
 #include "Singleton.h"
 #include "hiredis/hiredis.h"
 #include "ConfigMgr.h"
@@ -16,6 +19,7 @@ public:
 private:
     redisContext* createConnection();
     bool isConnectionAlive(redisContext* context);
+    void closeAllConnections();
 
     std::atomic<bool> b_stop_;
     size_t poolSize_;
@@ -50,4 +54,3 @@ private:
 
     std::unique_ptr<RedisConPool> _con_pool;
 };
-

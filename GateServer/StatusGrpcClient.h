@@ -68,7 +68,7 @@ public:
         while (!connections_.empty()) {
             connections_.pop();
         }
-        cond_.notify_all();
+        cond_.notify_all(); // 唤醒所有等待的线程
     }
 
 private:
@@ -94,13 +94,16 @@ class StatusGrpcClient : public Singleton<StatusGrpcClient>
 {
     friend class Singleton<StatusGrpcClient>;
 public:
+    // 添加完整的析构函数实现
     ~StatusGrpcClient() {
-
+        if (pool_) {
+            pool_->close();
+        }
+        std::cout << "StatusGrpcClient 已被销毁" << std::endl;
     }
     GetChatServerRsp GetChatServer(int uid);
 
 private:
     StatusGrpcClient();
     std::unique_ptr<StatusConPool> pool_;
-
 };
