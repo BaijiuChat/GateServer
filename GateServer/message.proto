@@ -30,3 +30,14 @@ message GetChatServerRsp {
 service StatusService {
     rpc GetChatServer (GetChatServerReq) returns (GetChatServerRsp) {}
 }
+
+message LoginReq{
+    int32 uid = 1;
+    string token= 2;
+}
+
+message LoginRsp {
+    int32 error = 1;
+    int32 uid = 2;
+    string token = 3;
+}

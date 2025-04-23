@@ -439,7 +439,7 @@ int MySqlDao::CheckLogin(const std::string& email, const std::string& pwd, UserI
     }
 
     try {
-        std::unique_ptr<sql::PreparedStatement> pstmt(con->_con->prepareStatement("SELECT pwd FROM user WHERE email = ?"));
+        std::unique_ptr<sql::PreparedStatement> pstmt(con->_con->prepareStatement("SELECT uid, name, email, pwd FROM user WHERE email = ?"));
         pstmt->setString(1, email);
         std::unique_ptr<sql::ResultSet> res(pstmt->executeQuery());
 
@@ -459,8 +459,9 @@ int MySqlDao::CheckLogin(const std::string& email, const std::string& pwd, UserI
         }
 
         // 匹配成功
-        userInfo.name = res->getString("name");;
-        userInfo.email = email;
+        std::cout << "1\n";
+        userInfo.name = res->getString("name");
+        userInfo.email = res->getString("email");
         userInfo.uid = res->getInt("uid");
         userInfo.pwd = db_pwd;
         pool_->returnConnection(std::move(con));

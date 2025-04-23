@@ -55,6 +55,8 @@ enum ErrorCodes {
     DatabaseConnectionFailed = 2002, // 数据库连接失败
     DatabaseProcedureError = 2003,   // 数据库存储过程错误
     UserEmailNotExists = 2004,     // 用户或邮箱不存在
+    UidInvalid = 2005,          // UID无效
+    TokenInvalid = 2006,        // TOKEN无效
 
     // 系统错误码 (3000-3999)
     GeneralException = 3001,    // 一般异常
