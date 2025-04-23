@@ -47,6 +47,7 @@ enum ErrorCodes {
     PasswdUpFailed = 1008,  // 更新密码失败
     PasswdInvalid = 1009,   // 登录密码无效
     RPCGetFailed = 1010,    // RPC无法获取聊天服务器
+    ConnectionPoolFailed = 1011, // 无法获取池子中连接
 
     // 数据相关错误码 (2000-2999)
     UserEmailExists = 2000,     // 用户或邮箱存在

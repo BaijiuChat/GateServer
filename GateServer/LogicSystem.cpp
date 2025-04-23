@@ -1,6 +1,7 @@
 #include "LogicSystem.h"
 #include "HttpConnection.h"
 #include "VerifyGrpcClient.h"
+#include "StatusGrpcClient.h"
 #include <iostream>
 #include <boost/beast/core/ostream.hpp>
 #include <json/json.h>

@@ -20,6 +20,14 @@
 #include <jdbc/cppconn/statement.h>
 #include <jdbc/cppconn/exception.h>
 
+struct UserInfo
+{
+	int uid;
+	std::string name;
+	std::string pwd;
+	std::string email;
+};
+
 class SqlConnection 
 {
 public:
@@ -70,12 +78,4 @@ public:
 	bool CheckPwd(const std::string& name, const std::string& pwd, UserInfo& userInfo);*/
 private:
 	std::unique_ptr<MySqlPool> pool_;
-};
-
-struct UserInfo
-{
-    int uid;
-	std::string name;
-	std::string pwd;
-	std::string email;
 };
