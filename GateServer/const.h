@@ -42,10 +42,11 @@ enum ErrorCodes {
     RPCFailed = 1002,       // RPC调用失败（服务器）
     VerifyExpired = 1003,   // 验证码过期
     VerifyCodeErr = 1004,   // 验证码错误
-    PasswdErr = 1006,       // 密码错误
+    PasswdErr = 1006,       // 两次密码错误
     UserMailNotMatch = 1007,// 邮箱不匹配
     PasswdUpFailed = 1008,  // 更新密码失败
-    PasswdInvalid = 1009,   // 密码无效
+    PasswdInvalid = 1009,   // 登录密码无效
+    RPCGetFailed = 1010,    // RPC无法获取聊天服务器
 
     // 数据相关错误码 (2000-2999)
     UserEmailExists = 2000,     // 用户或邮箱存在

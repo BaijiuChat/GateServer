@@ -429,3 +429,84 @@ int MySqlDao::UpdatePwd(const std::string& name, const std::string& newpwd)
         return -5; // 未知异常
     }
 }
+
+int MySqlDao::CheckLogin(const std::string& email, const std::string& pwd, UserInfo& userInfo)
+{
+    auto con = pool_->getConnection();
+    if (con == nullptr) {
+        std::cerr << "无法获取数据库连接" << std::endl;
+        return -2; // 数据库连接失败
+    }
+
+    try {
+        std::unique_ptr<sql::PreparedStatement> pstmt(con->_con->prepareStatement("SELECT pwd FROM user WHERE email = ?"));
+        pstmt->setString(1, email);
+        std::unique_ptr<sql::ResultSet> res(pstmt->executeQuery());
+
+        // 如果没有结果，说明用户不存在
+        if (!res->next()) {
+            std::cout << "用户 " << email << " 不存在" << std::endl;
+            pool_->returnConnection(std::move(con));
+            return -1; // 用户不存在
+        }
+
+        // 检查密码是否匹配
+        std::string db_pwd = res->getString("pwd");
+        std::cout << "数据库密码: " << db_pwd << ", 请求密码: " << pwd << std::endl;
+        if (pwd != db_pwd) {
+            pool_->returnConnection(std::move(con));
+            return -3; // 密码不匹配
+        }
+
+        // 匹配成功
+        userInfo.name = res->getString("name");;
+        userInfo.email = email;
+        userInfo.uid = res->getInt("uid");
+        userInfo.pwd = db_pwd;
+        pool_->returnConnection(std::move(con));
+        return 0; // 成功
+    }
+    catch (sql::SQLException& e)
+    {
+        // 记录错误
+        std::cerr << "SQLException: " << e.what();
+        std::cerr << " (MySQL error code: " << e.getErrorCode();
+        std::cerr << ", SQLState: " << e.getSQLState() << " )" << std::endl;
+
+        try {
+            if (con) {
+                pool_->returnConnection(std::move(con));
+            }
+        }
+        catch (...) {
+            std::cerr << "返回连接到池中时发生异常" << std::endl;
+        }
+        return -6; // SQL异常
+    }
+    catch (std::exception& e)
+    {
+        std::cerr << "标准异常: " << e.what() << std::endl;
+        try {
+            if (con) {
+                pool_->returnConnection(std::move(con));
+            }
+        }
+        catch (...) {
+            std::cerr << "返回连接到池中时发生异常" << std::endl;
+        }
+        return -4; // 一般异常
+    }
+    catch (...)
+    {
+        std::cerr << "未知异常" << std::endl;
+        try {
+            if (con) {
+                pool_->returnConnection(std::move(con));
+            }
+        }
+        catch (...) {
+            std::cerr << "返回连接到池中时发生异常" << std::endl;
+        }
+        return -5; // 未知异常
+    }
+}

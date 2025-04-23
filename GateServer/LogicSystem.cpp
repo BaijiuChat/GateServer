@@ -40,6 +40,9 @@ void handleErrorResponse(Json::Value& root, int errorCode, const std::string& cu
 		case ErrorCodes::PasswdErr:
 			root["message"] = "两次输入的密码不一致";
 			break;
+		case ErrorCodes::PasswdInvalid:
+			root["message"] = "密码错误";
+			break;
 		case ErrorCodes::UserEmailNotExists:
 			root["message"] = "用户名或邮箱不存在";
 			break;
@@ -63,6 +66,12 @@ void handleErrorResponse(Json::Value& root, int errorCode, const std::string& cu
 			break;
 		case ErrorCodes::UnknownError:
 			root["message"] = "未定义的错误";
+			break;
+		case ErrorCodes::RPCFailed:
+			root["message"] = "RPC服务异常";
+			break;
+		case ErrorCodes::RPCGetFailed:
+			root["message"] = "RPC无法获取聊天服务器";
 			break;
 		default:
 			root["message"] = "系统错误";
@@ -390,6 +399,77 @@ LogicSystem::LogicSystem()
 			root["error"] = ErrorCodes::SUCCESS;
 			root["email"] = email;
 			root["user"] = user;
+			std::string jsonstr = root.toStyledString();
+			beast::ostream(connection->_response.body()) << jsonstr;
+			return true;
+			});
+
+		RegPost("/user_login", [](std::shared_ptr<HttpConnection> connection) {
+			// 将请求体中二进制数据转为string
+			auto body_str = boost::beast::buffers_to_string(connection->_request.body().data());
+			std::cout << "接受体为：" << body_str << std::endl;
+			// 设置回应体格式为json/text
+			connection->_response.set(http::field::content_type, "json/text");
+			Json::Value root; // 回应体未被翻译成json的root
+			Json::Value src_root; // 存取解析过后的body_str
+			Json::Reader reader; // Json解析
+			// 尝试解析
+			bool parse_success = reader.parse(body_str, src_root);
+			if (!parse_success) {
+				std::cout << "解析JSON失败！" << std::endl;
+				root["error"] = ErrorCodes::Error_Json;
+				std::string jsonstr = root.toStyledString();
+				beast::ostream(connection->_response.body()) << jsonstr;
+				return true;
+			}
+			// 读取数据
+			auto email = src_root["email"].asString();
+			auto pwd = src_root["passwd"].asString();
+			UserInfo userInfo;
+			// 查询数据库判断是否有匹配
+			int pwd_valid = MySqlMgr::GetInstance()->CheckLogin(email, pwd, userInfo);
+			if (pwd_valid != 0) {
+				std::cout << "登录失败！错误码: " << pwd_valid << std::endl;
+				switch (pwd_valid) {
+				case -1:
+					handleErrorResponse(root, ErrorCodes::UserEmailNotExists);
+					break;
+				case -2:
+					handleErrorResponse(root, ErrorCodes::ERR_NETWORK);
+					break;
+				case -3:
+					handleErrorResponse(root, ErrorCodes::PasswdInvalid);
+					break;
+				case -4:
+					handleErrorResponse(root, ErrorCodes::GeneralException);
+					break;
+				case -5:
+					handleErrorResponse(root, ErrorCodes::UnknownException);
+					break;
+				case -6:
+					handleErrorResponse(root, ErrorCodes::SQLFailed);
+					break;
+				}
+				std::string jsonstr = root.toStyledString();
+				beast::ostream(connection->_response.body()) << jsonstr;
+				return true;
+			}
+			// 查询StatusServer找到合适的连接
+			auto reply = StatusGrpcClient::GetInstance()->GetChatServer(userInfo.uid);
+			if (reply.error()) {
+				std::cout << "gRPC获取聊天服务器失败，错误为" << reply.error() << std::endl;
+				handleErrorResponse(root, ErrorCodes::RPCGetFailed);
+				std::string jsonstr = root.toStyledString();
+				beast::ostream(connection->_response.body()) << jsonstr;
+				return true;
+			}
+
+			std::cout << "成功加载userInfo, uid为" << userInfo.uid << std::endl;
+			root["error"] = 0;
+			root["email"] = email;
+			root["uid"] = userInfo.uid;
+			root["token"] = reply.token();
+			root["host"] = reply.host();
 			std::string jsonstr = root.toStyledString();
 			beast::ostream(connection->_response.body()) << jsonstr;
 			return true;
